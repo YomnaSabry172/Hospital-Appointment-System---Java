@@ -118,6 +118,6 @@ Each view:
 
 ### **1. Clone or Download**
 ```bash
-git clone https://github.com/<your-username>/Hospital-Appointment-System---Java.git
+git clone https://github.com/<YomnaSabry127>/Hospital-Appointment-System---Java.git
 
 
