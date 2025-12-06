@@ -57,7 +57,7 @@ src/
     PatientView.java          // JavaFX UI for patient management
     Person.java               // Base class for Doctor and Patient
     UIUtils.java              // Shared UI utilities (FXML helpers, alerts, styling)
-    style.css                 // CSS styling for the JavaFX UI ...
+    style.css                 // CSS styling for the JavaFX UI
 ```
 ## 5. How the System Works (Design Explanation)
 
@@ -119,5 +119,7 @@ Each view:
 ### **1. Clone or Download**
 ```bash
 git clone https://github.com/<YomnaSabry172>/Hospital-Appointment-System---Java.git
+```
+### **2. Run it on an IDE**
 
 
