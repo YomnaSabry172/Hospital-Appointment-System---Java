@@ -1,7 +1,7 @@
 # Java Hospital Appointment System
 
 ## 1. Project Overview
-This is a JavaFX-based Hospital Appointment Management System.  
+This is a Java-based Hospital Appointment Management System.  
 It provides a simple graphical interface for managing doctors, patients, and their appointments in a small clinic or hospital.
 
 The application is mainly intended as an educational project to demonstrate:
@@ -13,7 +13,7 @@ The application is mainly intended as an educational project to demonstrate:
 
 ## 2. Main Features
 - **Doctor Management**
-  - Add new doctors with basic information (e.g. ID, name, specialization).
+  - Add new doctors with basic information (e.g., ID, name, specialization).
   - View the list of all registered doctors.
 
 - **Patient Management**
