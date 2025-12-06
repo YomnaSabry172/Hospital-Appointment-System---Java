@@ -1,2 +1,2 @@
-# Hospital-Appointment-System---Java
+# Hospital-Appointment-System-Java
 JavaFX-based Hospital Appointment Management System project.
