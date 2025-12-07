@@ -5,7 +5,7 @@ public class Appointment {
     private Doctor doctor;
     private String date;
     private String time;
-    private boolean status;    // true = booked, false = available
+    private Boolean status;    // true = booked, false = available
     private int id;
     private static int idCounter = 1;
 
