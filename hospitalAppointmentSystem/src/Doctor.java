@@ -31,5 +31,9 @@ public class Doctor extends Person {
     public String toString() {
         return getName() + " (ID " + getId() + ")";
     }
-
+    @Override
+public String getRole() {
+    return "Doctor";
+    }
 }
+
