@@ -40,5 +40,7 @@ public abstract  class Person {
     public void setNationalId(String nationalId) {
         this.nationalId = nationalId;
     }
+        public abstract String getRole();
 }
+
 
