@@ -22,4 +22,9 @@ public class Patient extends Person {
     public String toString() {
         return getName() + " (ID " + getId() + ")";
     }
+    @Override
+public String getRole() {
+    return "Patient";
+    }
 }
+
