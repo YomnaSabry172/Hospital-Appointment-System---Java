@@ -1,6 +1,6 @@
 package hospitalAppointmentSystem;
 
-public abstract  class Person {
+public abstract class Person {
     private String name;
     private int id;
     private String nationalId;
@@ -42,5 +42,6 @@ public abstract  class Person {
     }
         public abstract String getRole();
 }
+
 
 
