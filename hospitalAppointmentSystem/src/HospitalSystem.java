@@ -3,7 +3,6 @@ package hospitalAppointmentSystem;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class HospitalSystem {
     private ArrayList<Doctor> doctors;
     private ArrayList<Patient> patients;
@@ -100,8 +99,8 @@ public class HospitalSystem {
         }
         return null;
     }
-    
-     // add available slot as needed in the requirements to add a slot and check if there is any identical slot
+
+    // create ONE free slot if there is no identical slot already
     public Appointment addAvailableSlot(int doctorId, String date, String time) {
         Doctor doctor = getDoctor(doctorId);
         if (doctor == null) {
@@ -109,25 +108,58 @@ public class HospitalSystem {
         }
 
         for (Appointment appointment : this.appointments) {
-            if (appointment.getDoctor().getId() == doctorId
+            if (appointment.getDoctorId() == doctorId
                 && appointment.getDate().equals(date)
                 && appointment.getTime().equals(time)) {
                 return null;
             }
         }
 
-        Appointment appointment = new Appointment(null, doctor, date, time);
+        Appointment appointment = new Appointment(doctorId, null, date, time);
         this.appointments.add(appointment);
         return appointment;
     }
-// bookAppointment 
-    
-//cancelAppointment
-    
+
+    public boolean bookAppointment(int doctorId, String date, String time, int patientId) {
+        Doctor doctor = getDoctor(doctorId);
+        Patient patient = getPatient(patientId);
+        if (doctor == null || patient == null) {
+            return false;
+        }
+        for (Appointment appointment : this.appointments) {
+            if (appointment.getDoctorId() == doctorId
+                && appointment.getDate().equals(date)
+                && appointment.getTime().equals(time)
+                && Boolean.FALSE.equals(appointment.getStatus())) {
+                appointment.setPatientId(patientId);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean cancelAppointment(int doctorId, String date, String time) {
+        Doctor doctor = getDoctor(doctorId);
+        if (doctor == null) {
+            return false;
+        }
+        for (Appointment appointment : this.appointments) {
+            if (appointment.getDoctorId() == doctorId
+                && appointment.getDate().equals(date)
+                && appointment.getTime().equals(time)
+                && Boolean.TRUE.equals(appointment.getStatus())) {
+                appointment.setPatientId(null);
+                appointment.setStatus(false);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public ArrayList<Appointment> getBookedAppointmentsByDoctor(Doctor doctor) {
         ArrayList<Appointment> result = new ArrayList<>();
         for (Appointment appointment : this.appointments) {
-            if (appointment.getDoctor().getId() == doctor.getId()
+            if (appointment.getDoctorId() == doctor.getId()
                 && Boolean.TRUE.equals(appointment.getStatus())) {
                 result.add(appointment);
             }
@@ -138,7 +170,7 @@ public class HospitalSystem {
     public ArrayList<Appointment> getAvailableAppointmentsByDoctor(Doctor doctor) {
         ArrayList<Appointment> result = new ArrayList<>();
         for (Appointment appointment : this.appointments) {
-            if (appointment.getDoctor().getId() == doctor.getId()
+            if (appointment.getDoctorId() == doctor.getId()
                 && Boolean.FALSE.equals(appointment.getStatus())) {
                 result.add(appointment);
             }
@@ -147,18 +179,16 @@ public class HospitalSystem {
     }
 
     public void generateAvailableAppointments(Doctor doctor, String date) {
-        // If we already generated slots for this doctor on this date, do nothing
         for (Appointment apt : appointments) {
-            if (apt.getDoctor().getId() == doctor.getId()
+            if (apt.getDoctorId() == doctor.getId()
                 && apt.getDate().equals(date)) {
                 return;
             }
         }
 
-        // Parse timeSlot (e.g., "09:00-17:00")
         String[] times = doctor.getTimeSlot().split("-");
-        String startTime = times[0];  // "09:00"
-        String endTime   = times[1];  // "17:00"
+        String startTime = times[0];
+        String endTime   = times[1];
 
         int startHour = Integer.parseInt(startTime.split(":")[0]);
         int startMin  = Integer.parseInt(startTime.split(":")[1]);
@@ -168,17 +198,14 @@ public class HospitalSystem {
         int currentHour = startHour;
         int currentMin  = startMin;
 
-        // Create 30-min slots
         while (currentHour < endHour ||
               (currentHour == endHour && currentMin < endMin)) {
 
             String timeSlot = String.format("%02d:%02d", currentHour, currentMin);
 
-            // Appointment with null patient = available slot
-            Appointment appointment = new Appointment(null, doctor, date, timeSlot);
+            Appointment appointment = new Appointment(doctor.getId(), null, date, timeSlot);
             this.appointments.add(appointment);
 
-            // Add 30 minutes
             currentMin += 30;
             if (currentMin >= 60) {
                 currentMin = 0;
@@ -187,7 +214,6 @@ public class HospitalSystem {
         }
     }
 
-    // Helper getters for GUI
     public ArrayList<Doctor> getDoctors() {
         return doctors;
     }
@@ -200,4 +226,3 @@ public class HospitalSystem {
         return appointments;
     }
 }
-
