@@ -100,7 +100,30 @@ public class HospitalSystem {
         }
         return null;
     }
+    
+     // add available slot as needed in the requirements to add a slot and check if there is any identical slot
+    public Appointment addAvailableSlot(int doctorId, String date, String time) {
+        Doctor doctor = getDoctor(doctorId);
+        if (doctor == null) {
+            return null;
+        }
 
+        for (Appointment appointment : this.appointments) {
+            if (appointment.getDoctor().getId() == doctorId
+                && appointment.getDate().equals(date)
+                && appointment.getTime().equals(time)) {
+                return null;
+            }
+        }
+
+        Appointment appointment = new Appointment(null, doctor, date, time);
+        this.appointments.add(appointment);
+        return appointment;
+    }
+// bookAppointment 
+    
+//cancelAppointment
+    
     public ArrayList<Appointment> getBookedAppointmentsByDoctor(Doctor doctor) {
         ArrayList<Appointment> result = new ArrayList<>();
         for (Appointment appointment : this.appointments) {
@@ -177,3 +200,4 @@ public class HospitalSystem {
         return appointments;
     }
 }
+
