@@ -1,33 +1,30 @@
 package hospitalAppointmentSystem;
 
 public class Appointment {
-    private Patient patient;   // null means available slot
-    private Doctor doctor;
+
+    private int doctorId;
+    private Integer patientId;   // null = free slot
     private String date;
     private String time;
-    private Boolean status;    // true = booked, false = available
+    private Boolean status;
     private int id;
     private static int idCounter = 1;
 
-    public Appointment(Patient patient, Doctor doctor, String date, String time) {
-        this.patient = patient;
-        this.doctor = doctor;
+    public Appointment(int doctorId, Integer patientId, String date, String time) {
+        this.doctorId = doctorId;
+        this.patientId = patientId;   // null means free
         this.date = date;
         this.time = time;
-        this.status = (patient != null);   // booked only if patient is not null
-        this.id = generateId();
+        this.status = (patientId != null);
+        this.id = idCounter++;
     }
 
-    private int generateId() {
-        return idCounter++;
+    public int getDoctorId() {
+        return doctorId;
     }
 
-    public Patient getPatient() {
-        return patient;
-    }
-
-    public Doctor getDoctor() {
-        return doctor;
+    public Integer getPatientId() {
+        return patientId;
     }
 
     public String getDate() {
@@ -46,13 +43,9 @@ public class Appointment {
         return id;
     }
 
-    public void setPatient(Patient patient) {
-        this.patient = patient;
-        this.status = (patient != null);  // keep status consistent
-    }
-
-    public void setDoctor(Doctor doctor) {
-        this.doctor = doctor;
+    public void setPatientId(Integer patientId) {
+        this.patientId = patientId;
+        this.status = (patientId != null);
     }
 
     public void setDate(String date) {
@@ -66,14 +59,11 @@ public class Appointment {
     public void setStatus(Boolean status) {
         this.status = status;
     }
+
     @Override
     public String toString() {
-        String patientName = (patient == null) ? "Available" : patient.getName();
-        String statusText  = (status != null && status) ? "Booked" : "Free";
-
-        return String.format("ID %d | %s %s | Doctor: %s | Patient: %s | %s",
-                id, date, time, doctor.getName(), patientName, statusText);
+        String p = (patientId == null) ? "Available" : ("Patient ID " + patientId);
+        return "Appointment ID " + id + " | Doctor ID " + doctorId + " | " +
+               date + " " + time + " | " + p + " | " + (status ? "Booked" : "Free");
     }
-
 }
-
