@@ -28,7 +28,7 @@ public class AppointmentView {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(10));
 
-        // ---------- TOP: doctor + date + refresh/generate ----------
+        //TOP: doctor + date + refresh/generate
 
         GridPane topForm = new GridPane();
         topForm.setHgap(10);
@@ -49,7 +49,7 @@ public class AppointmentView {
         topForm.add(refreshButton, 0, 2, 2, 1);
         topForm.add(generateButton, 2, 2);
 
-        // ---------- CENTER: header + table + summary ----------
+        //CENTER: header + table + summary
 
         Label headerLabel = new Label("No doctor/date selected");
         Label summaryLabel = new Label("Summary: 0 total | 0 booked | 0 free");
@@ -67,8 +67,15 @@ public class AppointmentView {
 
         TableColumn<Appointment, String> patientCol = new TableColumn<>("Patient");
         patientCol.setCellValueFactory(cellData -> {
-            Patient p = cellData.getValue().getPatient();
-            String name = (p == null) ? "Available" : p.getName();
+            Appointment a = cellData.getValue();
+            Integer patientId = a.getPatientId();
+            String name;
+            if (patientId == null) {
+                name = "Available";
+            } else {
+                Patient p = hospitalSystem.getPatient(patientId);
+                name = (p != null) ? p.getName() : "Patient ID " + patientId;
+            }
             return new SimpleStringProperty(name);
         });
         patientCol.setPrefWidth(150);
@@ -81,7 +88,7 @@ public class AppointmentView {
         });
         statusCol.setPrefWidth(80);
 
-        table.getColumns().addAll(idCol, timeCol, patientCol, statusCol);
+        table.getColumns().setAll(idCol, timeCol, patientCol, statusCol);
 
         ObservableList<Appointment> displayedAppointments =
                 FXCollections.observableArrayList();
@@ -90,7 +97,7 @@ public class AppointmentView {
         VBox centerBox = new VBox(8, headerLabel, table, summaryLabel);
         centerBox.setPadding(new Insets(10, 0, 0, 0));
 
-        // ---------- BOTTOM: patient + actions + log ----------
+        //BOTTOM: patient + actions + log
 
         VBox bottomBox = new VBox(10);
         bottomBox.setPadding(new Insets(10, 0, 0, 0));
@@ -119,14 +126,12 @@ public class AppointmentView {
 
         bottomBox.getChildren().addAll(bottomForm, buttonRow, logArea);
 
-        // ---------- Place into root ----------
-
+		        //Place into root 
         root.setTop(topForm);
         root.setCenter(centerBox);
         root.setBottom(bottomBox);
 
-        // ---------- helper runnables ----------
-
+        	//helpers 
         Runnable refreshCombos = () -> {
             doctorCombo.getItems().setAll(hospitalSystem.getDoctors());
             patientCombo.getItems().setAll(hospitalSystem.getPatients());
@@ -178,7 +183,7 @@ public class AppointmentView {
 
             List<Appointment> filtered = hospitalSystem.getAppointments()
                     .stream()
-                    .filter(a -> a.getDoctor().getId() == selectedDoctor.getId()
+                    .filter(a -> a.getDoctorId() == selectedDoctor.getId()
                               && a.getDate().equals(dateStr))
                     .collect(Collectors.toList());
 
@@ -192,18 +197,26 @@ public class AppointmentView {
             boolean hasDoctorAndDate = hasDoctor && hasDate;
 
             boolean hasRows = !displayedAppointments.isEmpty();
-            boolean hasSelection = table.getSelectionModel().getSelectedItem() != null;
+
+            Appointment selected = table.getSelectionModel().getSelectedItem();
+            boolean hasSelection = selected != null;
             boolean hasPatient = patientCombo.getValue() != null;
+
+            boolean isFreeSlot   = hasSelection && Boolean.FALSE.equals(selected.getStatus());
+            boolean isBookedSlot = hasSelection && Boolean.TRUE.equals(selected.getStatus());
 
             generateButton.setDisable(!hasDoctorAndDate);
             showBookedButton.setDisable(!hasDoctorAndDate || !hasRows);
             showAvailableButton.setDisable(!hasDoctorAndDate || !hasRows);
-            bookButton.setDisable(!(hasSelection && hasPatient));
-            cancelButton.setDisable(!hasSelection);
+
+            // Book only when slot is FREE and a patient is chosen
+            bookButton.setDisable(!(isFreeSlot && hasPatient));
+
+            // Cancel only when slot is BOOKED
+            cancelButton.setDisable(!isBookedSlot);
         };
 
-        // ---------- listeners ----------
-
+        // listeners
         doctorCombo.valueProperty().addListener((obs, oldVal, newVal) -> {
             refreshTable.run();
             updateButtonsState.run();
@@ -222,7 +235,7 @@ public class AppointmentView {
             updateButtonsState.run();
         });
 
-        // ---------- Button actions ----------
+        // Button actions
 
         refreshButton.setOnAction(e -> {
             refreshCombos.run();
@@ -246,7 +259,7 @@ public class AppointmentView {
                 UiUtils.showError(
                         "Invalid time slot",
                         "Doctor " + d.getName() + " has an invalid time slot: " + timeSlot +
-                        "\nExpected format: HH:MM-HH:MM (e.g. 09:00-17:00)."
+                        "\nExpected format: HH:MM-HH:MM (e.g. 09:00-17:00). Consider not adding spaces"
                 );
                 logArea.appendText("Error: invalid time slot for doctor ID " + d.getId() + ".\n");
                 return;
@@ -279,25 +292,59 @@ public class AppointmentView {
                 return;
             }
 
-            selected.setPatient(p);
-            selected.setStatus(true);
+            // Extra safety: if it is already booked, block it
+            if (Boolean.TRUE.equals(selected.getStatus())) {
+                UiUtils.showError("Already booked",
+                        "This appointment is already booked. Cancel it first if you want to change the patient.");
+                logArea.appendText("Error: tried to book an already-booked slot (ID "
+                                   + selected.getId() + ").\n");
+                return;
+            }
+
+            // Use the central logic in HospitalSystem
+            boolean ok = hospitalSystem.bookAppointment(
+                    selected.getDoctorId(),
+                    selected.getDate(),
+                    selected.getTime(),
+                    p.getId()
+            );
+
+            if (!ok) {
+                UiUtils.showError("Cannot book",
+                        "Booking failed. The slot may no longer be available.");
+                logArea.appendText("Error: booking failed for slot ID " + selected.getId() + ".\n");
+                return;
+            }
+
+            // Booking succeeded
             refreshTable.run();
             updateButtonsState.run();
 
+            Doctor d = hospitalSystem.getDoctor(selected.getDoctorId());
+
             logArea.appendText("✓ Booked: " + p.getName()
-                               + " with " + selected.getDoctor().getName()
+                               + " with " + (d != null ? d.getName() : "Doctor ID " + selected.getDoctorId())
                                + " at " + selected.getDate() + " " + selected.getTime() + ".\n");
             UiUtils.showInfo("Appointment booked",
                     "Appointment booked for " + p.getName()
-                    + " with Dr. " + selected.getDoctor().getName()
+                    + " with Dr. " + (d != null ? d.getName() : "ID " + selected.getDoctorId())
                     + " at " + selected.getDate() + " " + selected.getTime() + ".");
         });
+
 
         cancelButton.setOnAction(e -> {
             Appointment selected = table.getSelectionModel().getSelectedItem();
             if (selected == null) {
                 UiUtils.showError("No selection", "Select an appointment to cancel.");
                 logArea.appendText("Error: no appointment selected for cancel.\n");
+                return;
+            }
+
+            // do not cancel if the slot is already free
+            if (!Boolean.TRUE.equals(selected.getStatus())) {
+                UiUtils.showError("Cannot cancel", "This appointment is not booked (it is already free).");
+                logArea.appendText("Error: tried to cancel a free slot (ID "
+                                   + selected.getId() + ").\n");
                 return;
             }
 
@@ -310,7 +357,7 @@ public class AppointmentView {
                 return;
             }
 
-            selected.setPatient(null);
+            selected.setPatientId(null);
             selected.setStatus(false);
             refreshTable.run();
             updateButtonsState.run();
@@ -320,6 +367,7 @@ public class AppointmentView {
             UiUtils.showInfo("Appointment cancelled",
                     "Appointment ID " + selected.getId() + " is now free.");
         });
+
 
         showBookedButton.setOnAction(e -> {
             Doctor d = doctorCombo.getValue();
@@ -333,7 +381,7 @@ public class AppointmentView {
 
             List<Appointment> filtered = hospitalSystem.getAppointments()
                     .stream()
-                    .filter(a -> a.getDoctor().getId() == d.getId()
+                    .filter(a -> a.getDoctorId() == d.getId()
                               && a.getDate().equals(dateStr)
                               && Boolean.TRUE.equals(a.getStatus()))
                     .collect(Collectors.toList());
@@ -355,7 +403,7 @@ public class AppointmentView {
 
             List<Appointment> filtered = hospitalSystem.getAppointments()
                     .stream()
-                    .filter(a -> a.getDoctor().getId() == d.getId()
+                    .filter(a -> a.getDoctorId() == d.getId()
                               && a.getDate().equals(dateStr)
                               && Boolean.FALSE.equals(a.getStatus()))
                     .collect(Collectors.toList());
