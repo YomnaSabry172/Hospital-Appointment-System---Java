@@ -6,7 +6,7 @@ public class Appointment {
     private Integer patientId;   // null = free slot
     private String date;
     private String time;
-    private Boolean status;
+    private boolean status;
     private int id;
     private static int idCounter = 1;
 
@@ -35,7 +35,7 @@ public class Appointment {
         return time;
     }
 
-    public Boolean getStatus() {
+    public boolean getStatus() {
         return status;
     }
 
@@ -56,7 +56,7 @@ public class Appointment {
         this.time = time;
     }
 
-    public void setStatus(Boolean status) {
+    public void setStatus(boolean status) {
         this.status = status;
     }
 
